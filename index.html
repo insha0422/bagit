@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BagIt - Neon Shop</title>
+<style>
+  body {
+    background-color: black;
+    color: white;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+  }
+
+  .hidden { display: none; }
+
+  .neon-outline {
+    border: 3px solid #ff00ff;
+    border-radius: 10px;
+    padding: 10px;
+    margin: 10px;
+    display: inline-block;
+    cursor: pointer;
+  }
+
+  .product-name {
+    color: #FFFF00;
+    font-weight: bold;
+    margin-top: 5px;
+  }
+
+  button {
+    padding: 10px 20px;
+    margin-top: 5px;
+    cursor: pointer;
+    border: none;
+    border-radius: 5px;
+    background-color: #ff00ff;
+    color: #fff;
+  }
+
+  input { padding: 5px; margin: 5px; }
+
+  /* Fullscreen background */
+  .bg-container {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    background: url('image.png') no-repeat center center/cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .bg-container::after {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.4); /* dark overlay */
+    z-index: 1;
+  }
+
+  .overlay-content {
+    position: relative;
+    z-index: 2; /* keep above image */
+    text-align: center;
+    color: white;
+  }
+
+  .overlay-content h2 {
+    margin-bottom: 20px;
+    font-size: 2rem;
+    color: #FFFF00;
+  }
+</style>
+</head>
+<body>
+
+<!-- Welcome/Login -->
+<div id="welcome">
+  <h1>Welcome to BagIt!</h1>
+  <p id="popupMessage">Are you a new user? <br> 
+    <button onclick="showRegister()">Register</button> | 
+    <button onclick="showLogin()">Login</button>
+  </p>
+</div>
+
+<!-- Register Form -->
+<div id="register" class="hidden">
+  <h2>Create Account</h2>
+  <input type="text" id="regUsername" placeholder="Username"><br>
+  <input type="password" id="regPassword" placeholder="Password"><br>
+  <button onclick="registerUser()">Register</button>
+</div>
+
+<!-- Login Form -->
+<div id="login" class="hidden">
+  <h2>Login</h2>
+  <input type="text" id="loginUsername" placeholder="Username"><br>
+  <input type="password" id="loginPassword" placeholder="Password"><br>
+  <button onclick="loginUser()">Login</button>
+</div>
+
+<!-- Dashboard -->
+<div id="dashboard" class="hidden">
+  <div class="bg-container">
+    <div class="overlay-content">
+      <h2>Welcome, <span id="userDisplay"></span>!</h2>
+
+      <div id="products">
+        <div class="neon-outline" onclick="showDescription('Jacket')">
+          <img src="jacket.png" width="150"><br>
+          <div class="product-name">Jacket</div>
+          <button onclick="addToCart('Jacket')">Add to Cart</button>
+        </div>
+
+        <div class="neon-outline" onclick="showDescription('Accessory')">
+          <img src="accessory.png" width="150"><br>
+          <div class="product-name">Accessory</div>
+          <button onclick="addToCart('Accessory')">Add to Cart</button>
+        </div>
+
+        <div class="neon-outline" onclick="showDescription('Shoes')">
+          <img src="shoes.png" width="150"><br>
+          <div class="product-name">Shoes</div>
+          <button onclick="addToCart('Shoes')">Add to Cart</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Description Modal -->
+<div id="descriptionModal" class="hidden">
+  <h2 id="descTitle"></h2>
+  <p id="descText">This is a detailed description of the product.</p>
+  <button onclick="closeDescription()">Close</button>
+</div>
+
+<!-- Address Page -->
+<div id="addressPage" class="hidden">
+  <h2>Enter your Address</h2>
+  <input type="text" id="address" placeholder="Your Address"><br>
+  <button onclick="goToPayment()">Proceed to Payment</button>
+</div>
+
+<!-- Payment Page -->
+<div id="paymentPage" class="hidden">
+  <h2>Payment</h2>
+  <p>Enter your payment details (simulation)</p>
+  <input type="text" placeholder="Card Number"><br>
+  <input type="text" placeholder="Expiry Date"><br>
+  <button onclick="completePayment()">Pay</button>
+</div>
+
+<!-- Thank You Page -->
+<div id="thankYouPage" class="hidden">
+  <h2>Thank You for Shopping at BagIt!</h2>
+  <p>Do you want to shop more?</p>
+  <button onclick="backToShop()">Yes, Take me to Shop</button>
+</div>
+
+<script>
+let users = [];
+let currentUser = '';
+let cart = [];
+
+// Show forms
+function showRegister() {
+  document.getElementById('welcome').classList.add('hidden');
+  document.getElementById('register').classList.remove('hidden');
+}
+
+function showLogin() {
+  document.getElementById('welcome').classList.add('hidden');
+  document.getElementById('login').classList.remove('hidden');
+}
+
+// Register & Login
+function registerUser() {
+  const username = document.getElementById('regUsername').value;
+  const password = document.getElementById('regPassword').value;
+  if(username && password) {
+    users.push({username, password});
+    alert('Account created!');
+    document.getElementById('register').classList.add('hidden');
+    showDashboard(username);
+  } else { alert('Fill all fields'); }
+}
+
+function loginUser() {
+  const username = document.getElementById('loginUsername').value;
+  const password = document.getElementById('loginPassword').value;
+  const user = users.find(u => u.username === username && u.password === password);
+  if(user) {
+    document.getElementById('login').classList.add('hidden');
+    showDashboard(username);
+  } else { alert('Invalid credentials'); }
+}
+
+// Dashboard
+function showDashboard(username) {
+  currentUser = username;
+  document.getElementById('userDisplay').innerText = username;
+  document.getElementById('dashboard').classList.remove('hidden');
+}
+
+// Product Description
+function showDescription(product) {
+  document.getElementById('descTitle').innerText = product;
+  document.getElementById('descriptionModal').classList.remove('hidden');
+}
+function closeDescription() {
+  document.getElementById('descriptionModal').classList.add('hidden');
+}
+
+// Add to cart
+function addToCart(product) {
+  cart.push(product);
+  alert(product + ' added to cart!');
+  document.getElementById('dashboard').classList.add('hidden');
+  document.getElementById('addressPage').classList.remove('hidden');
+}
+
+// Address
+function goToPayment() {
+  const address = document.getElementById('address').value;
+  if(address) {
+    document.getElementById('addressPage').classList.add('hidden');
+    document.getElementById('paymentPage').classList.remove('hidden');
+  } else { alert('Enter address'); }
+}
+
+// Payment
+function completePayment() {
+  document.getElementById('paymentPage').classList.add('hidden');
+  document.getElementById('thankYouPage').classList.remove('hidden');
+}
+
+// Shop More
+function backToShop() {
+  document.getElementById('thankYouPage').classList.add('hidden');
+  document.getElementById('dashboard').classList.remove('hidden');
+  cart = [];
+}
+</script>
+
+</body>
+</html>
